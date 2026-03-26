@@ -1,0 +1,55 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+*.egg-info/
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# ── Tests ─────────────────────────────────────────────────────────────────────
+.pytest_cache/
+
+# ── DVC ───────────────────────────────────────────────────────────────────────
+/dvc-storage/
+.dvc/cache/
+.dvc/tmp/
+
+# ── MLflow ────────────────────────────────────────────────────────────────────
+mlartifacts/
+mlflow.db
+
+# ── Daten (werden von Studierenden selbst erzeugt via dvc repro) ──────────────
+data/raw/
+data/processed/
+
+# ── Generierte Ausgaben ───────────────────────────────────────────────────────
+metrics/
+reports/
+
+# ── Konfiguration mit Geheimnissen ────────────────────────────────────────────
+.env
+.dvc/config.local
+
+# ── Dozenten-Inhalte (lokal behalten, NICHT auf GitHub) ──────────────────────
+professor/
+solutions/
+docker-compose.server.yml
+pgadmin-servers.json
+ASSIGNMENTS_UEBERSICHT.md
+VERBESSERUNGSVORSCHLAEGE.md
+.claude/
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+
+# ── Betriebssystem ────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

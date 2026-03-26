@@ -1,0 +1,39 @@
+# Core ML & Data
+pandas==2.2.2
+numpy==1.26.4
+scikit-learn==1.5.1
+
+# MLflow Experiment Tracking & Registry
+mlflow==2.14.3
+
+# Data Version Control + S3/MinIO Remote
+dvc==3.51.2
+dvc-s3==3.2.0             # S3-Plugin für DVC (MinIO-Unterstützung via boto3)
+boto3==1.34.144           # AWS/S3-Client – wird von dvc-s3 und mlflow für MinIO benötigt
+pathspec==0.11.2          # Fixiert – neuere Versionen inkompatibel mit dvc 3.51.2
+
+# Jupyter (Notebooks + DVC-Pipeline via nbconvert)
+jupyterlab==4.2.5
+nbconvert==7.16.4
+ipykernel==6.29.5
+
+# API Framework
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+
+# Monitoring & Drift Detection
+evidently==0.4.30
+
+# Datenbank (PostgreSQL)
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.31
+
+# Konfiguration (wird intern von DVC genutzt)
+pyyaml==6.0.1
+
+# Statistik (Welch's t-Test für A/B-Testing)
+scipy>=1.12
+
+# Development & Testing
+pytest==8.2.2
+httpx==0.27.0

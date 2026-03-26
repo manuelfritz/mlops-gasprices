@@ -1,0 +1,65 @@
+# DVC-Pipeline – von Studierenden schrittweise auszufüllen
+#
+# A2: ingest + preprocess eintragen
+# A3: train einkommentieren
+# A5: monitor einkommentieren + outs ergänzen
+#
+# WICHTIG: DVC führt keine Python-Skripte aus – es führt Ihre Jupyter Notebooks
+# direkt aus. Der Befehl dafür (Hinweis für alle Stages):
+#
+#   jupyter nbconvert --to notebook --execute --inplace notebooks/<IhrNotebook>.ipynb
+#
+# Jede Stage hat:
+#   cmd:   Befehl, der die Stage ausführt
+#   deps:  Abhängigkeiten (Notebook + benötigte Input-Dateien)
+#   outs:  Ausgabe-Dateien (werden von DVC versioniert)
+#
+# Dokumentation: https://dvc.org/doc/user-guide/project-structure/dvcyaml-files
+
+stages:
+  ingest:
+    # TODO A2: cmd, deps und outs eintragen
+    # Welches Notebook erzeugt data/raw/prices.csv?
+    # Hinweis: Den nbconvert-Befehl finden Sie in A1_Datenerfassung.ipynb (DVC-Abschnitt)
+    cmd: # TODO
+    deps:
+      - # TODO (Notebook)
+      - # TODO (config.py)
+    outs:
+      - # TODO
+
+  preprocess:
+    # TODO A2: cmd, deps und outs eintragen
+    # Welches Notebook erzeugt data/processed/features.csv?
+    # Hinweis: features.csv hängt von prices.csv ab – das muss als dep eingetragen werden!
+    cmd: # TODO
+    deps:
+      - # TODO (Notebook)
+      - # TODO (config.py)
+      - # TODO (Input von ingest-Stage)
+    outs:
+      - # TODO
+
+# A3: train-Stage einkommentieren (Anleitung in A3_Training.ipynb – DVC-Abschnitt)
+# A5: monitor-Stage einkommentieren + outs ergänzen (Anleitung in A5_Monitoring.ipynb – DVC-Abschnitt)
+#
+#  train:
+#    # TODO A3: cmd und deps eintragen
+#    cmd: jupyter nbconvert --to notebook --execute --inplace notebooks/A3_Training.ipynb
+#    deps:
+#      - notebooks/A3_Training.ipynb
+#      - config.py
+#      - data/processed/features.csv
+#
+#  monitor:
+#    # TODO A5: cmd und deps eintragen
+#    cmd: jupyter nbconvert --to notebook --execute --inplace notebooks/A5_Monitoring.ipynb
+#    deps:
+#      - notebooks/A5_Monitoring.ipynb
+#      - config.py
+#      - data/processed/features.csv
+#    outs:
+#      - reports/drift_report.html:
+#          cache: false
+#      - reports/drift_summary.json:
+#          cache: false
