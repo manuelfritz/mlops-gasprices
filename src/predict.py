@@ -1,8 +1,9 @@
 """
-A4 (Teil 1): Inferenz-Modul – Modell laden und Vorhersagen durchführen.
+A4 (vorgegeben): Inferenz-Modul – Modell laden und Vorhersagen durchführen.
 
 Lädt das trainierte Modell aus der MLflow Model Registry und
-führt Vorhersagen durch.
+führt Vorhersagen durch. Dieses Modul ist vollständig vorgegeben –
+es muss nicht verändert werden.
 """
 
 import os
@@ -41,7 +42,7 @@ def load_params(params_path: str = None) -> dict:
 
 def _fetch_hourly_prices(station_id: str, end_dt: datetime, hours: int = 175) -> pd.Series:
     """
-    [VORGEGEBEN] Lädt stündliche Kraftstoffpreise aus gasprices-Schema.
+    Lädt stündliche Kraftstoffpreise aus gasprices-Schema.
     Kraftstoffsorte wird über FUEL_TYPE in config.py gesteuert.
     """
     if end_dt.tzinfo is None:
@@ -81,9 +82,7 @@ def _fetch_hourly_prices(station_id: str, end_dt: datetime, hours: int = 175) ->
 
 
 def _get_price_at(hourly: pd.Series, dt: datetime) -> Optional[float]:
-    """
-    [VORGEGEBEN] Gibt den Preis zur vollen Stunde zurück.
-    """
+    """Gibt den Preis zur vollen Stunde zurück."""
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     ts = pd.Timestamp(dt).floor("h")
@@ -110,17 +109,14 @@ def _features_from_csv(predict_for: datetime) -> Optional[pd.DataFrame]:
         predict_for = predict_for.replace(tzinfo=timezone.utc)
     ts = pd.Timestamp(predict_for).floor("h")
 
-    # Genaue Übereinstimmung suchen
     match = df[df["datetime"] == ts]
     if not match.empty:
         return match.iloc[[0]]
 
-    # Nächstgelegene Zeile vor dem gesuchten Zeitpunkt
     before = df[df["datetime"] <= ts]
     if not before.empty:
         return before.iloc[[-1]]
 
-    # Nächstgelegene Zeile nach dem Zeitpunkt
     after = df[df["datetime"] > ts]
     if not after.empty:
         return after.iloc[[0]]
@@ -136,7 +132,7 @@ class FuelPricePredictor:
     """
     Singleton-Klasse für Benzinpreis-Inferenz.
 
-    Lädt das Production-Modell aus der MLflow Model Registry und
+    Lädt das neueste Modell aus der MLflow Model Registry und
     stellt Vorhersagen bereit.
     """
 
@@ -156,7 +152,7 @@ class FuelPricePredictor:
             self._params = load_params()
 
     def load_model(self) -> None:
-        """Production-Modell aus MLflow Model Registry laden."""
+        """Neuestes Modell aus MLflow Model Registry laden."""
         tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", MLFLOW_TRACKING_URI)
         mlflow.set_tracking_uri(tracking_uri)
 
@@ -170,17 +166,17 @@ class FuelPricePredictor:
                 "→ Zuerst A3_Training.ipynb ausführen"
             )
 
-        # TODO (1/2): Neueste Modell-Version bestimmen und laden
-        # Schritt 1: Neueste Version aus 'versions' ermitteln (höchste Versionsnummer)
-        # Schritt 2: model_uri zusammensetzen: "models:/<name>/<version>"
-        # Schritt 3: Modell laden und in self._model speichern
-        raise NotImplementedError("TODO: load_model – Modell aus MLflow Registry laden")
+        # Neueste Version bestimmen (höchste Versionsnummer)
+        latest = max(versions, key=lambda v: int(v.version))
+        self._model_version = latest.version
+        model_uri = f"models:/{model_name}/{self._model_version}"
+        self._model = mlflow.sklearn.load_model(model_uri)
 
-        # TODO (2/2): Feature-Reihenfolge aus features.csv ermitteln
-        # Lesen Sie die Spalten aus features.csv (nrows=0 genügt)
-        # Filtern Sie alle Nicht-Feature-Spalten heraus (_EXCLUDE_COLS + target_column)
-        # Speichern Sie die Feature-Spalten in self._feature_cols
-        raise NotImplementedError("TODO: load_model – Feature-Spalten ermitteln")
+        # Feature-Reihenfolge aus features.csv ermitteln
+        features_path = os.path.join(PROJECT_ROOT, self._params["paths"]["processed"])
+        cols = pd.read_csv(features_path, nrows=0).columns.tolist()
+        target = self._params["features"]["target_column"]
+        self._feature_cols = [c for c in cols if c not in _EXCLUDE_COLS and c != target]
 
         logger.info(f"Modell geladen: {model_name} v{self._model_version}")
 
@@ -202,31 +198,38 @@ class FuelPricePredictor:
             predict_for = predict_for.replace(tzinfo=timezone.utc)
 
         try:
-            # [VORGEGEBEN] Stündliche Preise aus der Datenbank laden
+            # Stündliche Preise aus der Datenbank laden
             # hourly: pd.Series – Index=UTC-Timestamps (volle Stunden), Werte=Preis in EUR/L
-            # Preis zu einem beliebigen Zeitpunkt: _get_price_at(hourly, datetime_obj)
             hourly = _fetch_hourly_prices(station_id, predict_for, hours=172)
 
-            # TODO: Feature-Vektor aufbauen – dieselben Features wie in A2 create_features()!
-            #
-            # Erstellen Sie ein dict `features_dict` mit genau den Spalten, die Ihr Modell
-            # in A2 trainiert wurde. Die Spaltennamen müssen exakt mit Ihrer features.csv
-            # übereinstimmen.
-            #
-            # Zeitliche Features aus `predict_for` (datetime):
-            #   hour, day_of_week, month, is_weekend
-            #
-            # Historische Preise aus `hourly` (via _get_price_at):
-            #   price_lag_1  – Preis 1 Stunde vor predict_for
-            #   price_lag_24 – Preis 24 Stunden vor predict_for
-            #   price_ma_24  – Mittelwert der letzten 24 Stunden
-            #   price_diff_1 – Differenz: Preis(jetzt) – Preis(vor 1h)
-            #   ... (weitere Features, die Sie in A2 implementiert haben)
-            #
-            raise NotImplementedError("TODO: Feature-Vektor aufbauen – wie in A2 create_features()")
+            # Feature-Vektor aufbauen – dieselben Features wie in A2 create_features()
+            ts = pd.Timestamp(predict_for).floor("h")
 
-        except NotImplementedError:
-            raise
+            # Einzelne Preispunkte
+            p0   = _get_price_at(hourly, predict_for)                    # aktuell
+            p1   = _get_price_at(hourly, predict_for - timedelta(hours=1))   # vor 1h
+            p24  = _get_price_at(hourly, predict_for - timedelta(hours=24))  # vor 24h
+            p168 = _get_price_at(hourly, predict_for - timedelta(hours=168)) # vor 168h
+
+            # Gleitende Mittelwerte (ohne aktuelle Stunde → kein Look-ahead)
+            past_24  = hourly.loc[ts - pd.Timedelta(hours=24)  : ts - pd.Timedelta(hours=1)]
+            past_168 = hourly.loc[ts - pd.Timedelta(hours=168) : ts - pd.Timedelta(hours=1)]
+            ma_24  = float(past_24.mean())  if not past_24.empty  else (p1 or 0.0)
+            ma_168 = float(past_168.mean()) if not past_168.empty else (p1 or 0.0)
+
+            features_dict = {
+                "hour":          predict_for.hour,
+                "day_of_week":   predict_for.weekday(),
+                "month":         predict_for.month,
+                "is_weekend":    int(predict_for.weekday() >= 5),
+                "price_lag_1":   p1   if p1   is not None else 0.0,
+                "price_lag_24":  p24  if p24  is not None else 0.0,
+                "price_lag_168": p168 if p168 is not None else 0.0,
+                "price_ma_24":   ma_24,
+                "price_ma_168":  ma_168,
+                "price_diff_1":  (p0 - p1) if (p0 is not None and p1 is not None) else 0.0,
+            }
+
         except Exception as db_err:
             logger.warning(f"DB-Zugriff fehlgeschlagen, verwende CSV-Fallback: {db_err}")
             row_df = _features_from_csv(predict_for)
@@ -244,20 +247,26 @@ class FuelPricePredictor:
         else:
             feature_values = list(features_dict.values())
 
-        # TODO (1/2): Vorhersage berechnen
-        # Bauen Sie aus feature_values ein numpy-Array der Form (1, n_features) auf
-        # und rufen Sie self._model.predict() auf.
-        # Speichern Sie das Ergebnis als float in predicted_price.
-        raise NotImplementedError("TODO: predict – Vorhersage berechnen")
+        # Vorhersage berechnen
+        X = np.array(feature_values).reshape(1, -1)
+        predicted_price = float(self._model.predict(X)[0])
+        confidence = 0.0
 
-        confidence = 0.0  # Optional: Standardabweichung der Bäume als Konfidenz-Maß
-
-        # TODO (2/2): Vorhersage in die predictions-Tabelle schreiben
-        # Verwenden Sie get_connection() und führen Sie ein INSERT aus:
-        #   Tabelle: "{GROUP_ID}".predictions
-        #   Spalten: prediction_ts, predicted_price, model_version
-        # Fehler beim Logging sollen das Programm nicht stoppen (try/except).
-        raise NotImplementedError("TODO: predict – Vorhersage in DB loggen")
+        # Vorhersage in die predictions-Tabelle schreiben
+        try:
+            conn = get_connection()
+            try:
+                cur = conn.cursor()
+                cur.execute(
+                    f'INSERT INTO "{GROUP_ID}".predictions '
+                    '(prediction_ts, predicted_price, model_version) VALUES (%s, %s, %s)',
+                    (predict_for, predicted_price, str(self._model_version))
+                )
+                conn.commit()
+            finally:
+                conn.close()
+        except Exception as log_err:
+            logger.warning(f"Vorhersage konnte nicht in DB geloggt werden: {log_err}")
 
         return predicted_price, str(self._model_version), confidence
 
