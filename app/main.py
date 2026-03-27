@@ -46,6 +46,11 @@ async def lifespan(app: FastAPI):
 
 # ── FastAPI App ────────────────────────────────────────────────────────────────
 
+# Hinter dem JupyterHub-Proxy ist die App unter /user/<gruppe>/proxy/8080/ erreichbar.
+# root_path teilt FastAPI diesen Basispfad mit, damit Swagger UI (/docs) korrekt funktioniert.
+_jhub_prefix = os.environ.get("JUPYTERHUB_SERVICE_PREFIX", "").rstrip("/")
+_root_path = f"{_jhub_prefix}/proxy/8080" if _jhub_prefix else ""
+
 app = FastAPI(
     title=f"Benzinpreis-Vorhersage – {GROUP_ID}",
     description=(
@@ -54,6 +59,7 @@ app = FastAPI(
     ),
     version="1.0.0",
     lifespan=lifespan,
+    root_path=_root_path,
 )
 
 
