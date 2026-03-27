@@ -6,8 +6,8 @@ Endpoints:
     POST /predict → Benzinpreis-Vorhersage
     GET  /        → HTML-Frontend
 
-Start:
-    uvicorn app.main:app --reload --port 8000
+Start (JupyterHub – Port aus config.py):
+    uvicorn app.main:app --reload --host 0.0.0.0 --port $(python -c "from config import API_PORT; print(API_PORT)")
 """
 
 import os
@@ -23,7 +23,7 @@ from pydantic import BaseModel
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
-from config import GROUP_ID, STATION_ID
+from config import GROUP_ID, STATION_ID, API_PORT
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ async def lifespan(app: FastAPI):
 # Hinter dem JupyterHub-Proxy ist die App unter /user/<gruppe>/proxy/8080/ erreichbar.
 # root_path teilt FastAPI diesen Basispfad mit, damit Swagger UI (/docs) korrekt funktioniert.
 _jhub_prefix = os.environ.get("JUPYTERHUB_SERVICE_PREFIX", "").rstrip("/")
-_root_path = f"{_jhub_prefix}/proxy/8080" if _jhub_prefix else ""
+_root_path = f"{_jhub_prefix}/proxy/{API_PORT}" if _jhub_prefix else ""
 
 app = FastAPI(
     title=f"Benzinpreis-Vorhersage – {GROUP_ID}",

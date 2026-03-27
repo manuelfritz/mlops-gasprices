@@ -21,6 +21,13 @@ FUEL_TYPE = "e5"                  # TODO: Kraftstoffsorte wählen – "e5", "e10
                                   # Bestimmt, welche Preisspalte aus der DB gelesen wird
                                   # und wie das Modell sowie das MLflow-Experiment benannt werden.
 
+# ── API-Port (automatisch aus GROUP_ID abgeleitet) ───────────────────────────
+# Jede Gruppe bekommt einen eigenen Port, um Konflikte zu vermeiden:
+#   gruppe_01 → 8081 | gruppe_02 → 8082 | ... | gruppe_23 → 8103
+# Sie müssen hier nichts ändern – der Port wird automatisch berechnet.
+_group_num = int(GROUP_ID.split("_")[1]) if "_" in GROUP_ID and GROUP_ID.split("_")[1].isdigit() else 80
+API_PORT = 8080 + _group_num      # Ihr persönlicher API-Port (uvicorn --port <API_PORT>)
+
 # ── Server-Verbindung (vom Dozenten bereitgestellt) ──────────────────────────
 
 SERVER_IP = "141.47.5.55"
